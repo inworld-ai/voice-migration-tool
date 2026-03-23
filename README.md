@@ -9,10 +9,7 @@ Batch-migrate your ElevenLabs voice clones into Inworld voice clones. The tool d
 Run these commands in your **Terminal** (macOS/Linux) or **Command Prompt** (Windows):
 
 ```bash
-git clone https://github.com/inworld-ai/voice-migration-tool.git
-cd voice-migration-tool
-npm install
-npm run dev
+git clone https://github.com/inworld-ai/voice-migration-tool.git && cd voice-migration-tool && npm install && npm run dev
 ```
 
 Then open [http://localhost:3000](http://localhost:3000) in your browser.
