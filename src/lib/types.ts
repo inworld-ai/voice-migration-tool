@@ -25,7 +25,6 @@ export interface ApiConfig {
   elevenLabsKey: string;
   inworldKey: string;
   inworldWorkspace: string;
-  anthropicKey?: string;
 }
 
 /* ── Migration streaming events (server → client) ────── */

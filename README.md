@@ -24,9 +24,8 @@ Enter these in the web UI when prompted:
 | **ElevenLabs API Key** | Yes | [ElevenLabs Dashboard](https://elevenlabs.io) > Profile > API Key |
 | **Inworld API Key** | Yes | Inworld Studio > Integrations > API Key (Base64-encoded) |
 | **Inworld Workspace** | Yes | Inworld Studio > your workspace name |
-| **Anthropic API Key** | No | [Anthropic Console](https://console.anthropic.com) > API Keys |
 
-The Anthropic key enables AI-generated preview utterances after migration. Without it, you can type your own preview text to test the cloned voice.
+The Inworld API key is also used to generate AI-powered preview utterances via [Inworld Router](https://docs.inworld.ai/router/introduction).
 
 ## How It Works
 

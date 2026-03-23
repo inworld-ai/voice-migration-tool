@@ -13,8 +13,6 @@ export default function ApiKeyForm({ onConnect, isLoading, error }: Props) {
   const [elevenLabsKey, setElevenLabsKey] = useState("");
   const [inworldKey, setInworldKey] = useState("");
   const [inworldWorkspace, setInworldWorkspace] = useState("");
-  const [anthropicKey, setAnthropicKey] = useState("");
-
   const canSubmit = elevenLabsKey.trim() && inworldKey.trim() && inworldWorkspace.trim() && !isLoading;
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -24,7 +22,6 @@ export default function ApiKeyForm({ onConnect, isLoading, error }: Props) {
       elevenLabsKey: elevenLabsKey.trim(),
       inworldKey: inworldKey.trim(),
       inworldWorkspace: inworldWorkspace.trim(),
-      anthropicKey: anthropicKey.trim() || undefined,
     });
   };
 
@@ -59,18 +56,6 @@ export default function ApiKeyForm({ onConnect, isLoading, error }: Props) {
           value={inworldWorkspace}
           onChange={(e) => setInworldWorkspace(e.target.value)}
           placeholder="my_workspace_name"
-          className="w-full bg-input-bg border border-border rounded-lg text-text py-2.5 px-3.5 text-sm outline-none focus:border-accent transition-colors"
-        />
-      </div>
-
-      <div className="pt-3 border-t border-border">
-        <label className="block text-[13px] text-text-muted mb-1">Anthropic API Key <span className="text-text-muted/50">(optional)</span></label>
-        <p className="text-[11px] text-text-muted/60 mb-1.5">Enables AI-generated preview utterances. Leave blank to type your own.</p>
-        <input
-          type="password"
-          value={anthropicKey}
-          onChange={(e) => setAnthropicKey(e.target.value)}
-          placeholder="sk-ant-..."
           className="w-full bg-input-bg border border-border rounded-lg text-text py-2.5 px-3.5 text-sm outline-none focus:border-accent transition-colors"
         />
       </div>

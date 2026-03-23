@@ -119,10 +119,10 @@ export default function Home() {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-[28px] font-light mb-2" style={{ fontFamily: "Georgia, serif" }}>
-          {phase === "setup" && "Voice Migration"}
+          {phase === "setup" && "Voice Clone Migration"}
           {phase === "listing" && "Select Voices"}
           {phase === "migrating" && "Migrating Voices"}
-          {phase === "results" && "Migration Complete"}
+          {phase === "results" && "Voice Clone Migration"}
         </h1>
         <p className="text-text-muted text-sm">
           {phase === "setup" && "Connect your ElevenLabs and Inworld accounts to begin migrating voices."}

@@ -1,17 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
-
-const SONNET_MODEL = "claude-sonnet-4-5";
 
 export async function POST(request: NextRequest) {
   const data = await request.json();
-  const anthropicKey: string = data.anthropicKey || "";
+  const inworldKey: string = data.inworldKey || "";
   const voiceName: string = data.voiceName || "";
   const voiceDescription: string = data.description || "";
   const voiceLabels: Record<string, string> = data.labels || {};
 
-  if (!anthropicKey) {
-    return NextResponse.json({ error: "no_api_key", message: "Anthropic API key not provided" }, { status: 400 });
+  if (!inworldKey) {
+    return NextResponse.json({ error: "Inworld API key is required" }, { status: 400 });
   }
 
   if (!voiceName) {
@@ -19,8 +16,6 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const anthropic = new Anthropic({ apiKey: anthropicKey });
-
     const metadataLines: string[] = [`Voice name: ${voiceName}`];
     if (voiceDescription) metadataLines.push(`Description: ${voiceDescription}`);
     const labelStr = Object.entries(voiceLabels)
@@ -38,16 +33,36 @@ export async function POST(request: NextRequest) {
       "- Does NOT reference voice cloning, AI, or the platform\n\n" +
       "Respond with ONLY the utterance text. No quotes, no explanation.";
 
-    const resp = await anthropic.messages.create({
-      model: SONNET_MODEL,
-      max_tokens: 256,
-      messages: [{
-        role: "user",
-        content: `${systemMsg}\n\n${metadataLines.join("\n")}\n\nWrite a natural preview utterance.`,
-      }],
+    const resp = await fetch("https://api.inworld.ai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Basic ${inworldKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "auto",
+        max_tokens: 256,
+        messages: [
+          {
+            role: "user",
+            content: `${systemMsg}\n\n${metadataLines.join("\n")}\n\nWrite a natural preview utterance.`,
+          },
+        ],
+      }),
     });
 
-    const utterance = (resp.content[0] as { text: string }).text.trim().replace(/^["']|["']$/g, "");
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      const errMsg = err?.error?.message || err?.detail || `Router API error (${resp.status})`;
+      return NextResponse.json({ error: String(errMsg) }, { status: resp.status });
+    }
+
+    const result = await resp.json();
+    const utterance = (result.choices?.[0]?.message?.content || "").trim().replace(/^["']|["']$/g, "");
+
+    if (!utterance) {
+      return NextResponse.json({ error: "No utterance generated" }, { status: 500 });
+    }
 
     return NextResponse.json({ utterance });
   } catch (e) {

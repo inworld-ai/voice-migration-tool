@@ -16,8 +16,6 @@ interface PreviewState {
   generating: boolean;
   synthesizing: boolean;
   error: string | null;
-  manualMode: boolean;
-  manualText: string;
 }
 
 export default function MigrationResult({ voices, onStartOver, apiConfig, elevenLabsVoices }: Props) {
@@ -101,29 +99,13 @@ export default function MigrationResult({ voices, onStartOver, apiConfig, eleven
       return;
     }
 
-    // No Anthropic key — switch to manual text input mode
-    if (!apiConfig.anthropicKey) {
-      updatePreview(voice.voiceId, {
-        utterance: "",
-        audioSrc: null,
-        generating: false,
-        synthesizing: false,
-        error: null,
-        manualMode: true,
-        manualText: "",
-      });
-      return;
-    }
-
-    // Step 1: Generate utterance with Claude
+    // Step 1: Generate utterance via Inworld Router
     updatePreview(voice.voiceId, {
       utterance: "",
       audioSrc: null,
       generating: true,
       synthesizing: false,
       error: null,
-      manualMode: false,
-      manualText: "",
     });
 
     try {
@@ -131,7 +113,7 @@ export default function MigrationResult({ voices, onStartOver, apiConfig, eleven
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          anthropicKey: apiConfig.anthropicKey,
+          inworldKey: apiConfig.inworldKey,
           voiceName: voice.voiceName,
           description: elVoice?.description || "",
           labels: elVoice?.labels || {},
@@ -164,12 +146,12 @@ export default function MigrationResult({ voices, onStartOver, apiConfig, eleven
       <div className="flex gap-4 mb-5">
         <div className="flex-1 bg-success/10 border border-success/20 rounded-lg p-4 text-center">
           <div className="text-2xl font-light text-success">{succeeded.length}</div>
-          <div className="text-[12px] text-success/80">Succeeded</div>
+          <div className="text-[12px] text-success/80">{succeeded.length === 1 ? "Voice Clone Succeeded" : "Voice Clones Succeeded"}</div>
         </div>
         {failed.length > 0 && (
           <div className="flex-1 bg-error/10 border border-error/20 rounded-lg p-4 text-center">
             <div className="text-2xl font-light text-error">{failed.length}</div>
-            <div className="text-[12px] text-error/80">Failed</div>
+            <div className="text-[12px] text-error/80">{failed.length === 1 ? "Voice Clone Failed" : "Voice Clones Failed"}</div>
           </div>
         )}
       </div>
@@ -238,33 +220,6 @@ export default function MigrationResult({ voices, onStartOver, apiConfig, eleven
                     </button>
                   </div>
 
-                  {/* Manual text input mode (no Anthropic key) */}
-                  {preview?.manualMode && !preview?.audioSrc && (
-                    <div className="mt-2 pt-2 border-t border-border">
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          value={preview.manualText || ""}
-                          onChange={(e) => updatePreview(voice.voiceId, { manualText: e.target.value })}
-                          placeholder="Type a preview sentence..."
-                          className="flex-1 bg-card border border-border rounded-lg text-text py-1.5 px-3 text-[12px] outline-none focus:border-accent transition-colors"
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" && preview.manualText?.trim()) {
-                              synthesizeText(voice, preview.manualText);
-                            }
-                          }}
-                        />
-                        <button
-                          onClick={() => synthesizeText(voice, preview.manualText || "")}
-                          disabled={!preview.manualText?.trim() || preview.synthesizing}
-                          className="shrink-0 bg-accent text-[#1a1714] px-3 py-1.5 rounded-lg text-[12px] font-medium hover:bg-accent-hover transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                        >
-                          {preview.synthesizing ? "Synthesizing..." : "Synthesize"}
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
                   {/* Preview details */}
                   {preview?.utterance && (
                     <div className="mt-2 pt-2 border-t border-border">
@@ -315,7 +270,7 @@ export default function MigrationResult({ voices, onStartOver, apiConfig, eleven
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-medium truncate">{voice.voiceName}</div>
-                  <div className="text-[12px] text-error mt-0.5">{voice.error}</div>
+                  <div className="text-[12px] text-error/90 mt-1 leading-relaxed">{voice.error}</div>
                 </div>
               </div>
             ))}
