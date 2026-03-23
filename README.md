@@ -6,14 +6,16 @@ Batch-migrate your ElevenLabs voice clones into Inworld voice clones. The tool d
 
 ## Quick Start
 
+Run these commands in your **Terminal** (macOS/Linux) or **Command Prompt** (Windows):
+
 ```bash
-git clone <repo-url>
-cd ivc-migration
+git clone https://github.com/inworld-ai/voice-migration-tool.git
+cd voice-migration-tool
 npm install
 npm run dev
 ```
 
-Then open [http://localhost:3000](http://localhost:3000).
+Then open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## API Keys
 
@@ -36,5 +38,6 @@ The Inworld API key is also used to generate AI-powered preview utterances via [
 
 ## Requirements
 
-- Node.js 18+
+- [Node.js](https://nodejs.org/) 18+
 - npm
+- [ffmpeg](https://ffmpeg.org/) (recommended — enables automatic audio format conversion, padding, and trimming). Install with `brew install ffmpeg` on macOS.
