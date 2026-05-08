@@ -13,8 +13,8 @@ const MAX_CLONE_ATTEMPTS = 3; // max rename attempts on 409
 // Inworld voice clone requirements
 const SUPPORTED_FORMAT = "wav"; // convert everything to wav for reliability
 const MIN_DURATION_SECS = 5;
-const MAX_DURATION_SECS = 15;
-const MAX_FILE_SIZE_BYTES = 4 * 1024 * 1024; // 4MB
+const MAX_DURATION_SECS = 60;
+const MAX_FILE_SIZE_BYTES = 12 * 1024 * 1024; // 12MB
 
 async function fetchWithRetry(url: string, options: RequestInit, maxRetries = 3): Promise<Response> {
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
