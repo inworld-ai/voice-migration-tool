@@ -63,17 +63,19 @@ async function processAudio(audioBuffer: Buffer, sampleIndex: number): Promise<B
   const id = randomUUID();
   const inputPath = join(tmpdir(), `ivc-in-${id}`);
   const outputPath = join(tmpdir(), `ivc-out-${id}.${SUPPORTED_FORMAT}`);
+  const reducedPath = join(tmpdir(), `ivc-reduced-${id}.${SUPPORTED_FORMAT}`);
 
   try {
     // Write raw audio to temp file
     await writeFile(inputPath, audioBuffer);
 
-    // Get duration
+    // Get duration (best-effort — used only to decide whether to pad short audio)
     let duration: number;
     try {
       duration = await getAudioDuration(inputPath);
     } catch {
-      // If ffprobe can't read it, try converting first then measuring
+      // If ffprobe can't read it, fall through — we'll still enforce the max
+      // duration via ffmpeg's -t flag below.
       duration = 0;
     }
 
@@ -82,9 +84,7 @@ async function processAudio(audioBuffer: Buffer, sampleIndex: number): Promise<B
 
     if (duration > 0 && duration < MIN_DURATION_SECS) {
       // Pad short audio by looping it to reach minimum duration
-      // Use apad filter to add silence, or loop the audio
       const loopCount = Math.ceil(MIN_DURATION_SECS / duration);
-      // Re-read with stream_loop to repeat the audio
       ffmpegArgs.length = 0;
       ffmpegArgs.push(
         "-y",
@@ -92,8 +92,10 @@ async function processAudio(audioBuffer: Buffer, sampleIndex: number): Promise<B
         "-i", inputPath,
         "-t", String(MIN_DURATION_SECS),
       );
-    } else if (duration > MAX_DURATION_SECS) {
-      // Trim to max duration
+    } else {
+      // Always cap output at MAX_DURATION_SECS — applies even when duration
+      // detection fails. ffmpeg's -t is a no-op for audio shorter than the
+      // requested duration, so this is safe regardless of input length.
       ffmpegArgs.push("-t", String(MAX_DURATION_SECS));
     }
 
@@ -107,35 +109,64 @@ async function processAudio(audioBuffer: Buffer, sampleIndex: number): Promise<B
 
     await runFfmpeg("ffmpeg", ffmpegArgs);
 
-    // Check file size — if too large, reduce sample rate
-    const fileStats = await stat(outputPath);
+    let finalPath = outputPath;
+
+    // If still too large, reduce sample rate, then trim further if needed
+    let fileStats = await stat(finalPath);
     if (fileStats.size > MAX_FILE_SIZE_BYTES) {
-      const reducedPath = join(tmpdir(), `ivc-reduced-${id}.${SUPPORTED_FORMAT}`);
       await runFfmpeg("ffmpeg", [
         "-y", "-i", outputPath,
         "-ac", "1", "-ar", "16000", "-sample_fmt", "s16",
+        "-t", String(MAX_DURATION_SECS),
         reducedPath,
       ]);
-      const result = await import("fs").then((fs) => fs.readFileSync(reducedPath));
-      await unlink(reducedPath).catch(() => {});
-      await unlink(outputPath).catch(() => {});
-      await unlink(inputPath).catch(() => {});
-      return result;
+      finalPath = reducedPath;
+      fileStats = await stat(finalPath);
+
+      // Still too large after downsampling — trim duration progressively
+      // until under the byte limit. Mono 16kHz s16 PCM is ~32 KB/sec, so
+      // worst-case we need a few iterations.
+      const MIN_TRIM_SECS = MIN_DURATION_SECS;
+      let trimSecs = MAX_DURATION_SECS;
+      while (fileStats.size > MAX_FILE_SIZE_BYTES && trimSecs > MIN_TRIM_SECS) {
+        // Estimate target duration from current bytes-per-second
+        const bytesPerSec = fileStats.size / trimSecs;
+        const targetSecs = Math.max(
+          MIN_TRIM_SECS,
+          Math.floor((MAX_FILE_SIZE_BYTES * 0.95) / bytesPerSec),
+        );
+        if (targetSecs >= trimSecs) break; // can't go lower meaningfully
+
+        await runFfmpeg("ffmpeg", [
+          "-y", "-i", reducedPath,
+          "-t", String(targetSecs),
+          "-c", "copy",
+          `${reducedPath}.tmp.wav`,
+        ]);
+        // Atomic-ish swap
+        const { renameSync } = await import("fs");
+        renameSync(`${reducedPath}.tmp.wav`, reducedPath);
+        trimSecs = targetSecs;
+        fileStats = await stat(reducedPath);
+      }
     }
 
-    const result = await import("fs").then((fs) => fs.readFileSync(outputPath));
-    return result;
+    const { readFileSync } = await import("fs");
+    return readFileSync(finalPath);
   } finally {
     // Cleanup temp files
     await unlink(inputPath).catch(() => {});
     await unlink(outputPath).catch(() => {});
+    await unlink(reducedPath).catch(() => {});
   }
 }
 
-// Check if ffmpeg is available
+// Check if ffmpeg AND ffprobe are available — both are required for full
+// audio processing (ffprobe is used for duration detection).
 async function checkFfmpeg(): Promise<boolean> {
   try {
     await runFfmpeg("ffmpeg", ["-version"]);
+    await runFfmpeg("ffprobe", ["-version"]);
     return true;
   } catch {
     return false;
