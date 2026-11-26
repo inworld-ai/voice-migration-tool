@@ -14,6 +14,8 @@ git clone https://github.com/inworld-ai/voice-migration-tool.git && cd voice-mig
 
 Then open [http://localhost:3000](http://localhost:3000) in your browser.
 
+The server only accepts connections from the same machine, so run it on the computer you're browsing from (not in a container or on another host).
+
 ## API Keys
 
 Enter these in the web UI when prompted:
