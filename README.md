@@ -37,6 +37,6 @@ The Inworld API key is also used to generate AI-powered preview utterances via [
 
 ## Requirements
 
-- [Node.js](https://nodejs.org/) 18+
+- [Node.js](https://nodejs.org/) 20.9+ (22.18+ to run `npm test`)
 - npm
 - [ffmpeg](https://ffmpeg.org/) (recommended — enables automatic audio format conversion, padding, and trimming). Install with `brew install ffmpeg` on macOS.
