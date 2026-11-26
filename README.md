@@ -14,6 +14,8 @@ git clone https://github.com/inworld-ai/voice-migration-tool.git && cd voice-mig
 
 Then open [http://localhost:3000](http://localhost:3000) in your browser.
 
+The server only accepts connections from the same machine, so run it on the computer you're browsing from (not in a container or on another host).
+
 ## API Keys
 
 Enter these in the web UI when prompted:
@@ -35,6 +37,6 @@ The Inworld API key is also used to generate AI-powered preview utterances via [
 
 ## Requirements
 
-- [Node.js](https://nodejs.org/) 18+
+- [Node.js](https://nodejs.org/) 20.9+ (22.18+ to run `npm test`)
 - npm
 - [ffmpeg](https://ffmpeg.org/) (recommended — enables automatic audio format conversion, padding, and trimming). Install with `brew install ffmpeg` on macOS.
