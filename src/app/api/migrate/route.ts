@@ -158,6 +158,7 @@ async function processAudio(audioBuffer: Buffer, sampleIndex: number): Promise<B
     await unlink(inputPath).catch(() => {});
     await unlink(outputPath).catch(() => {});
     await unlink(reducedPath).catch(() => {});
+    await unlink(`${reducedPath}.tmp.wav`).catch(() => {});
   }
 }
 
